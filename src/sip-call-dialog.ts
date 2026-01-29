@@ -280,6 +280,8 @@ class SIPCallDialog extends LitElement {
                 } else {
                     this.audioVisualizer = undefined;
                 }
+            } else {
+                this.audioVisualizer = undefined;
             }
         }
 
