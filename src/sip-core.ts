@@ -39,6 +39,23 @@ export interface ICEConfig extends RTCConfiguration {
     iceGatheringTimeout?: number;
 }
 
+/** Extension configuration for popup */
+export interface PopupExtension {
+    name?: string;
+    extension?: string;
+    camera_entity?: string | null;
+    auto_answer?: boolean;
+}
+
+/** Popup configuration interface */
+export interface PopupConfig {
+    buttons?: any[];
+    extensions?: { [key: string]: PopupExtension };
+    large?: boolean;
+    auto_open?: boolean;
+    hide_header_button?: boolean;
+}
+
 /** Configuration for SIP Core */
 export interface SIPCoreConfig {
     ice_config: ICEConfig;
@@ -51,7 +68,7 @@ export interface SIPCoreConfig {
     /** Output configuration */
     out: String;
     auto_answer: boolean;
-    popup_config: Object | null;
+    popup_config: PopupConfig | null;
     popup_override_component: string | null;
     /**
      * Whether to use video in SIP calls.
@@ -536,14 +553,11 @@ export class SIPCore {
                     let shouldAutoAnswer = this.config.auto_answer; // Default to global setting
                     
                     // Check if there's an extension-specific auto_answer setting
-                    if (this.config.popup_config && typeof this.config.popup_config === 'object') {
-                        const popupConfig = this.config.popup_config as any;
-                        if (popupConfig.extensions && popupConfig.extensions[callerExtension]) {
-                            const extensionConfig = popupConfig.extensions[callerExtension];
-                            if (extensionConfig.auto_answer !== undefined) {
-                                shouldAutoAnswer = extensionConfig.auto_answer;
-                                console.info(`Using extension-specific auto_answer for ${callerExtension}: ${shouldAutoAnswer}`);
-                            }
+                    if (this.config.popup_config?.extensions?.[callerExtension]) {
+                        const extensionConfig = this.config.popup_config.extensions[callerExtension];
+                        if (typeof extensionConfig.auto_answer === 'boolean') {
+                            shouldAutoAnswer = extensionConfig.auto_answer;
+                            console.info(`Using extension-specific auto_answer for ${callerExtension}: ${shouldAutoAnswer}`);
                         }
                     }
 

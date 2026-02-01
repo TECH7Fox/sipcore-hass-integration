@@ -3,26 +3,26 @@ import { customElement, property, state } from "lit/decorators.js";
 import { sipCore, CALLSTATE, AUDIO_DEVICE_KIND } from "./sip-core";
 import { AudioVisualizer } from "./audio-visualizer";
 
-interface Extension {
+export interface Extension {
     name: string;
     extension: string;
     camera_entity: string | null;
     auto_answer?: boolean;
 }
 
-enum ButtonType {
+export enum ButtonType {
     SERVICE_CALL = "service_call",
     DTMF = "dtmf"
 }
 
-interface Button {
+export interface Button {
     label: string;
     icon: string;
     type: ButtonType;
     data: any;
 }
 
-interface PopupConfig {
+export interface PopupConfig {
     buttons: Button[];
     extensions: { [key: string]: Extension };
     large: boolean | undefined;
