@@ -39,23 +39,6 @@ export interface ICEConfig extends RTCConfiguration {
     iceGatheringTimeout?: number;
 }
 
-/** Extension configuration for popup */
-export interface PopupExtension {
-    name?: string;
-    extension?: string;
-    camera_entity?: string | null;
-    auto_answer?: boolean;
-}
-
-/** Popup configuration interface */
-export interface PopupConfig {
-    buttons?: any[];
-    extensions?: { [key: string]: PopupExtension };
-    large?: boolean;
-    auto_open?: boolean;
-    hide_header_button?: boolean;
-}
-
 /** Configuration for SIP Core */
 export interface SIPCoreConfig {
     ice_config: ICEConfig;
