@@ -7,6 +7,7 @@ interface Extension {
     name: string;
     extension: string;
     camera_entity: string | null;
+    auto_answer?: boolean;
 }
 
 enum ButtonType {

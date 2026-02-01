@@ -531,7 +531,23 @@ export class SIPCore {
                         );
                     });
 
-                    if (this.config.auto_answer) {
+                    // Check for extension-specific auto_answer first, then fall back to global
+                    const callerExtension = e.session.remote_identity.uri.user;
+                    let shouldAutoAnswer = this.config.auto_answer; // Default to global setting
+                    
+                    // Check if there's an extension-specific auto_answer setting
+                    if (this.config.popup_config && typeof this.config.popup_config === 'object') {
+                        const popupConfig = this.config.popup_config as any;
+                        if (popupConfig.extensions && popupConfig.extensions[callerExtension]) {
+                            const extensionConfig = popupConfig.extensions[callerExtension];
+                            if (extensionConfig.auto_answer !== undefined) {
+                                shouldAutoAnswer = extensionConfig.auto_answer;
+                                console.info(`Using extension-specific auto_answer for ${callerExtension}: ${shouldAutoAnswer}`);
+                            }
+                        }
+                    }
+
+                    if (shouldAutoAnswer) {
                         console.info("Auto answering call...");
                         this.answerCall();
                     }
