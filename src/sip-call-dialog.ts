@@ -55,6 +55,9 @@ class SIPCallDialog extends LitElement {
     @state()
     private buttonListenerActive = false;
 
+    @state()
+    private currentCamera: string = "";
+
     constructor() {
         super();
         this.setupButton();
@@ -112,6 +115,17 @@ class SIPCallDialog extends LitElement {
                 height: 100%;
                 width: 100%;
                 display: block;
+            }
+
+            webrtc-camera {
+                height: 100%;
+                width: 100%;
+                display: block;
+            }
+
+            webrtc-camera video {
+                width: 100%;
+                height: 100%;
             }
 
             #remoteVideo {
@@ -196,7 +210,30 @@ class SIPCallDialog extends LitElement {
             }
         }
         this.updateButtonState();
+        this.updateWebRTCCamera();
     };
+
+    updateWebRTCCamera() {
+        const element = this.renderRoot.querySelector('webrtc-camera') as any;
+        if (element && this.currentCamera) {
+            if (!element.config || element.config.entity !== this.currentCamera) {
+                element.setConfig({
+                    entity: this.currentCamera,
+                    muted: true,
+                    ui: false, // Disable custom UI buttons
+                });
+                element.hass = this.hass;
+                // Disable native video controls
+                if (element.video) {
+                    element.video.controls = false;
+                }
+                // Trigger connection
+                if (element.onconnect) {
+                    element.onconnect();
+                }
+            }
+        }
+    }
 
     connectedCallback() {
         super.connectedCallback();
@@ -232,6 +269,32 @@ class SIPCallDialog extends LitElement {
     closePopup() {
         this.open = false;
         this.requestUpdate();
+    }
+
+    renderCameraStream(camera: string) {
+        // Store camera for updates
+        this.currentCamera = camera;
+
+        // Check if WebRTC Camera component is available for low-latency streaming
+        const hasWebRTC = customElements.get('webrtc-camera');
+
+        if (hasWebRTC) {
+            // Use WebRTC for low-latency streaming
+            // Schedule configuration after render
+            requestAnimationFrame(() => this.updateWebRTCCamera());
+
+            return html`<webrtc-camera></webrtc-camera>`;
+        } else {
+            // Fall back to standard Home Assistant camera stream (higher latency)
+            return html`
+                <ha-camera-stream
+                    allow-exoplayer
+                    muted
+                    .hass=${this.hass}
+                    .stateObj=${this.hass.states[camera]}
+                ></ha-camera-stream>
+            `;
+        }
     }
 
     render() {
@@ -459,14 +522,7 @@ class SIPCallDialog extends LitElement {
                                       </div>
                                   `
                                 : camera
-                                ? html`
-                                      <ha-camera-stream
-                                          allow-exoplayer
-                                          muted
-                                          .hass=${this.hass}
-                                          .stateObj=${this.hass.states[camera]}
-                                      ></ha-camera-stream>
-                                  `
+                                ? this.renderCameraStream(camera)
                                 : ""
                         }
                     </div>
