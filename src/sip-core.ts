@@ -34,6 +34,28 @@ export interface User {
     password: string;
 }
 
+/**
+ * Per-device SIP credentials stored in localStorage under 'sipcore-force-user'.
+ * When present, bypasses Home Assistant user matching entirely.
+ *
+ * Set on a device via the browser console (one-time setup):
+ * @example
+ * localStorage.setItem('sipcore-force-user', JSON.stringify({
+ *   extension: "100",
+ *   password: "mypassword",
+ *   display_name: "Front Door Panel"  // optional
+ * }));
+ *
+ * Clear to revert to normal HA user matching:
+ * @example
+ * localStorage.removeItem('sipcore-force-user');
+ */
+export interface ForceUser {
+    extension: string;
+    password: string;
+    display_name?: string;
+}
+
 export interface ICEConfig extends RTCConfiguration {
     /** Timeout in milliseconds for ICE gathering */
     iceGatheringTimeout?: number;
@@ -248,6 +270,40 @@ export class SIPCore {
         }
         console.debug(`Audio input set to ${deviceId}`);
     }
+    
+    /**
+     * Per-device forced SIP user credentials, stored in localStorage.
+     * When set, this device will always register with these credentials,
+     * ignoring the global `users` list and the logged-in HA user.
+     *
+     * Set: `localStorage.setItem('sipcore-force-user', JSON.stringify({ extension, password, display_name? }))`
+     * Clear: `localStorage.removeItem('sipcore-force-user')`
+     */
+    get ForceUser(): ForceUser | null {
+        const raw = localStorage.getItem("sipcore-force-user");
+        if (!raw) return null;
+        try {
+            const parsed = JSON.parse(raw);
+            if (typeof parsed.extension === "string" && typeof parsed.password === "string") {
+                return parsed as ForceUser;
+            }
+            console.warn("sipcore-force-user in localStorage is missing required fields (extension, password). Ignoring.");
+            return null;
+        } catch {
+            console.warn("sipcore-force-user in localStorage is not valid JSON. Ignoring.");
+            return null;
+        }
+    }
+
+    set ForceUser(forceUser: ForceUser | null) {
+        if (forceUser === null) {
+            localStorage.removeItem("sipcore-force-user");
+            console.info("sipcore-force-user cleared. Will use HA user matching on next reload.");
+        } else {
+            localStorage.setItem("sipcore-force-user", JSON.stringify(forceUser));
+            console.info(`sipcore-force-user set to extension ${forceUser.extension}. Reload to apply.`);
+        }
+    }
 
     private async setupAudio() {
         this.incomingAudio = new Audio(this.config.incomingRingtoneUrl);
@@ -319,6 +375,24 @@ export class SIPCore {
     }
 
     private async setupUser(): Promise<void> {
+        // 0. Check for a per-device forced user stored in localStorage.
+        //    This takes priority over everything — the global users list and
+        //    the logged-in HA user are both ignored. Intended for kiosk tablets
+        //    or shared dashboards that should always register as a specific
+        //    Asterisk extension regardless of who is logged into HA.
+        const forceUser = this.ForceUser;
+        if (forceUser) {
+            this.user = {
+                ha_username: "",
+                display_name: forceUser.display_name ?? forceUser.extension,
+                extension: forceUser.extension,
+                password: forceUser.password,
+            };
+            console.info(`sipcore-force-user active: registering as extension ${this.user.extension} (${this.user.display_name})`);
+            this.ua = this.setupUA();
+            return;
+        }
+        
         const currentUserId = this.hass.user.id;
         const currentUserName = this.hass.user.name;
 
@@ -410,6 +484,19 @@ export class SIPCore {
 
     async startCall(extension: string) {
         this.ua.call(extension, await this.callOptions());
+    }
+    
+    /**
+     * Re-applies user selection immediately, called by `sip-user-card` when
+     * its YAML config changes. Stops the current UA, re-runs `setupUser()`
+     * with the latest `ForceUser` value from localStorage, then restarts.
+     */
+    async applyForceUser(): Promise<void> {
+        console.info("sip-user-card config changed, re-registering...");
+        this.ua.stop();
+        await this.setupUser();
+        this.ua.start();
+        this.triggerUpdate();
     }
 
     /** Dispatches a `sipcore-update` event */
