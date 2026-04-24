@@ -255,7 +255,7 @@ class SIPCallCard extends LitElement {
                     sipCore.callState === CALLSTATE.IDLE
                         ? html`
                               <div class="placeholder">
-                                  <span>No active call</span>
+                                  <span>${this.config?.idle_text ?? "No active call"}</span>
                               </div>
                           `
                         : camera
