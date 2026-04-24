@@ -20,8 +20,8 @@ interface Extension {
 }
 
 enum ButtonType {
-    SERVICE_CALL,
-    DTMF,
+    SERVICE_CALL = "service_call",
+    DTMF = "dtmf",
 }
 
 interface Button {
