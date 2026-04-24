@@ -275,6 +275,7 @@ class SIPCallCard extends LitElement {
                         <ha-icon-button
                             style="color: var(--label-badge-green);"
                             label="Answer call"
+                            ?disabled="${sipCore.callState === CALLSTATE.IDLE}"
                             @click="${() => sipCore.answerCall()}">
                             <ha-icon .icon=${phoneIcon}></ha-icon>
                         </ha-icon-button>
@@ -352,6 +353,7 @@ class SIPCallCard extends LitElement {
                         <ha-icon-button
                             style="color: var(--label-badge-red);"
                             label="End Call"
+                            ?disabled="${sipCore.callState === CALLSTATE.IDLE}"
                             @click="${() => sipCore.endCall()}">
                             <ha-icon .icon=${"mdi:phone-off"}></ha-icon>
                         </ha-icon-button>
