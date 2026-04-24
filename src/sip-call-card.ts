@@ -20,8 +20,8 @@ interface Extension {
 }
 
 enum ButtonType {
-    SERVICE_CALL,
-    DTMF,
+    SERVICE_CALL = "service_call",
+    DTMF = "dtmf",
 }
 
 interface Button {
@@ -255,7 +255,7 @@ class SIPCallCard extends LitElement {
                     sipCore.callState === CALLSTATE.IDLE
                         ? html`
                               <div class="placeholder">
-                                  <span>No active call</span>
+                                  <span>${this.config?.idle_text ?? "No active call"}</span>
                               </div>
                           `
                         : camera
@@ -275,6 +275,7 @@ class SIPCallCard extends LitElement {
                         <ha-icon-button
                             style="color: var(--label-badge-green);"
                             label="Answer call"
+                            ?disabled="${sipCore.callState === CALLSTATE.IDLE}"
                             @click="${() => sipCore.answerCall()}">
                             <ha-icon .icon=${phoneIcon}></ha-icon>
                         </ha-icon-button>
@@ -352,6 +353,7 @@ class SIPCallCard extends LitElement {
                         <ha-icon-button
                             style="color: var(--label-badge-red);"
                             label="End Call"
+                            ?disabled="${sipCore.callState === CALLSTATE.IDLE}"
                             @click="${() => sipCore.endCall()}">
                             <ha-icon .icon=${"mdi:phone-off"}></ha-icon>
                         </ha-icon-button>
