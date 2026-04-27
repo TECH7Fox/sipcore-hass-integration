@@ -332,11 +332,10 @@ class SIPCallDialog extends LitElement {
 
         if (
             sipCore.callState !== CALLSTATE.IDLE &&
-            sipCore.remoteExtension !== null &&
-            sipCore.remoteVideoStream === null
+            sipCore.remoteExtension !== null
         ) {
             camera = this.config.extensions[sipCore.remoteExtension]?.camera_entity || "";
-            if (!camera) {
+            if (!camera && sipCore.remoteVideoStream === null) {
                 if (sipCore.remoteAudioStream !== null) {
                     if (this.audioVisualizer === undefined) {
                         this.audioVisualizer = new AudioVisualizer(this.renderRoot, sipCore.remoteAudioStream, 16);
@@ -344,6 +343,8 @@ class SIPCallDialog extends LitElement {
                 } else {
                     this.audioVisualizer = undefined;
                 }
+            } else {
+                this.audioVisualizer = undefined;
             }
         }
 
@@ -512,7 +513,7 @@ class SIPCallDialog extends LitElement {
                                 : "none"
                         }"></div>
                         <video poster="noposter" style="display: ${
-                            sipCore.remoteVideoStream === null ? "none" : "block"
+                            sipCore.remoteVideoStream === null || camera ? "none" : "block"
                         }" playsinline id="remoteVideo"></video>
                         ${
                             sipCore.callState === CALLSTATE.IDLE
