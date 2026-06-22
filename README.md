@@ -77,6 +77,25 @@ It includes official cards and popups, but also supports third-party cards.
 <br>
 <br>
 
+## Call Button Card
+
+`custom:sip-call-button`
+
+A minimal card with a single button for a fixed extension.
+
+- 🟢 Green call button when idle
+- 🔴 Red hangup button while a call is active
+- 🔁 Reflects an ongoing call when you navigate back to the page
+
+```yaml
+type: custom:sip-call-button
+extension: "100"
+name: Doorbell # optional, used for the button label
+```
+
+<br>
+<br>
+
 ## 📋 Requirements
 For this to work you will need the following:
  * ☎️ A sip/pbx server (Works best with the [Asterisk add-on](https://github.com/TECH7Fox/Asterisk-add-on))
