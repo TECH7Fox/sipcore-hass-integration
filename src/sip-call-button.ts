@@ -113,6 +113,7 @@ class SIPCallButtonCard extends LitElement {
         // call is still reflected here after navigating away and back.
         const callState = sipCore.callState;
         const isIdle = callState === CALLSTATE.IDLE;
+        const isConnected = callState === CALLSTATE.CONNECTED;
         // The phone is "ringing" while a call is being established (incoming or
         // outgoing ringback), but not once it is connected.
         const isRinging = callState === CALLSTATE.INCOMING || callState === CALLSTATE.OUTGOING;
@@ -128,6 +129,16 @@ class SIPCallButtonCard extends LitElement {
                               @click="${() => sipCore.startCall(this.config?.extension || "")}"
                           >
                               <ha-icon .icon=${"mdi:phone"}></ha-icon>
+                          </ha-icon-button>
+                      `
+                    : !isConnected
+                    ? html`
+                          <ha-icon-button
+                              class="hangup"
+                              label="End call"
+                              @click="${() => sipCore.endCall()}"
+                          >
+                              <ha-icon .icon=${"mdi:phone-settings"}></ha-icon>
                           </ha-icon-button>
                       `
                     : html`
