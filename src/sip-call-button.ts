@@ -50,6 +50,10 @@ class SIPCallButtonCard extends LitElement {
                 --mdc-icon-size: 40px;
             }
 
+            ha-card.fill-container {
+                height: 100%;
+            }
+
             ha-icon {
                 display: flex;
                 align-items: center;
@@ -73,16 +77,18 @@ class SIPCallButtonCard extends LitElement {
 
             /* Blink/pulse the card background while the phone is ringing */
             ha-card.ringing {
-                animation: ringing-pulse 1s ease-in-out infinite;
+                animation: ringing-pulse 2s infinite;
             }
 
             @keyframes ringing-pulse {
-                0%,
-                100% {
-                    background-color: var(--card-background-color);
+                0% {
+                    box-shadow: inset 0 0 0 0 rgb(0, 160, 0);
                 }
                 50% {
-                    background-color: var(--label-badge-green);
+                    box-shadow: inset 0 0 10px 5px rgb(0, 160, 0);
+                }
+                100% {
+                    box-shadow: inset 0 0 0 0 rgb(0, 160, 0);
                 }
             }
         `;
@@ -113,7 +119,7 @@ class SIPCallButtonCard extends LitElement {
         const isMuted = sipCore.RTCSession?.isMuted().audio ?? false;
 
         return html`
-            <ha-card class="${isRinging ? "ringing" : ""}">
+            <ha-card class="${isRinging ? "ringing" : ""} fill-container">
                 ${isIdle
                     ? html`
                           <ha-icon-button
