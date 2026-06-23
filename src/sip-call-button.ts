@@ -42,6 +42,7 @@ class SIPCallButtonCard extends LitElement {
         return css`
             ha-card {
                 display: flex;
+                flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 padding: 8px;
@@ -61,6 +62,28 @@ class SIPCallButtonCard extends LitElement {
 
             .hangup {
                 color: var(--label-badge-red);
+            }
+
+            /* Smaller than the call/hangup button */
+            .mute {
+                color: var(--secondary-text-color);
+                --mdc-icon-button-size: 40px;
+                --mdc-icon-size: 24px;
+            }
+
+            /* Blink/pulse the card background while the phone is ringing */
+            ha-card.ringing {
+                animation: ringing-pulse 1s ease-in-out infinite;
+            }
+
+            @keyframes ringing-pulse {
+                0%,
+                100% {
+                    background-color: var(--card-background-color);
+                }
+                50% {
+                    background-color: var(--label-badge-green);
+                }
             }
         `;
     }
@@ -82,10 +105,15 @@ class SIPCallButtonCard extends LitElement {
     render() {
         // The call state lives in the global sipCore singleton, so an ongoing
         // call is still reflected here after navigating away and back.
-        const isIdle = sipCore.callState === CALLSTATE.IDLE;
+        const callState = sipCore.callState;
+        const isIdle = callState === CALLSTATE.IDLE;
+        // The phone is "ringing" while a call is being established (incoming or
+        // outgoing ringback), but not once it is connected.
+        const isRinging = callState === CALLSTATE.INCOMING || callState === CALLSTATE.OUTGOING;
+        const isMuted = sipCore.RTCSession?.isMuted().audio ?? false;
 
         return html`
-            <ha-card>
+            <ha-card class="${isRinging ? "ringing" : ""}">
                 ${isIdle
                     ? html`
                           <ha-icon-button
@@ -103,6 +131,18 @@ class SIPCallButtonCard extends LitElement {
                               @click="${() => sipCore.endCall()}"
                           >
                               <ha-icon .icon=${"mdi:phone-off"}></ha-icon>
+                          </ha-icon-button>
+                          <ha-icon-button
+                              class="mute"
+                              label="${isMuted ? "Unmute" : "Mute"}"
+                              ?disabled="${sipCore.RTCSession === null}"
+                              @click="${() => {
+                                  if (isMuted) sipCore.RTCSession?.unmute({ audio: true });
+                                  else sipCore.RTCSession?.mute({ audio: true });
+                                  this.requestUpdate();
+                              }}"
+                          >
+                              <ha-icon .icon=${isMuted ? "mdi:microphone-off" : "mdi:microphone"}></ha-icon>
                           </ha-icon-button>
                       `}
             </ha-card>
