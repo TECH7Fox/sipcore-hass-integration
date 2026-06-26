@@ -1,0 +1,176 @@
+import { LitElement, html, css } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { sipCore, CALLSTATE } from "./sip-core";
+
+declare global {
+    interface Window {
+        customCards?: Array<{ type: string; name: string; preview: boolean; description: string }>;
+    }
+}
+
+interface CallButtonCardConfig {
+    extension: string;
+    name: string;
+}
+
+@customElement("sip-call-button")
+class SIPCallButtonCard extends LitElement {
+    @property()
+    public hass = sipCore.hass;
+
+    @property()
+    public config: CallButtonCardConfig | undefined;
+
+    setConfig(config: any) {
+        if (!config.extension) {
+            throw new Error("You need to define an extension to call");
+        }
+        this.config = config;
+    }
+
+    static getStubConfig() {
+        return {
+            extension: "100",
+        };
+    }
+
+    getCardSize() {
+        return 1;
+    }
+
+    static get styles() {
+        return css`
+            ha-card {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 8px;
+                --mdc-icon-button-size: 64px;
+                --mdc-icon-size: 40px;
+            }
+
+            ha-card.fill-container {
+                height: 100%;
+            }
+
+            ha-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .call {
+                color: var(--label-badge-green);
+            }
+
+            .hangup {
+                color: var(--label-badge-red);
+            }
+
+            /* Smaller than the call/hangup button */
+            .mute {
+                color: var(--secondary-text-color);
+                --mdc-icon-button-size: 40px;
+                --mdc-icon-size: 24px;
+            }
+
+            /* Blink/pulse the card background while the phone is ringing */
+            ha-card.ringing {
+                animation: ringing-pulse 2s infinite;
+            }
+
+            @keyframes ringing-pulse {
+                0% {
+                    box-shadow: inset 0 0 0 0 rgb(0, 160, 0);
+                }
+                50% {
+                    box-shadow: inset 0 0 10px 5px rgb(0, 160, 0);
+                }
+                100% {
+                    box-shadow: inset 0 0 0 0 rgb(0, 160, 0);
+                }
+            }
+        `;
+    }
+
+    updateHandler = () => {
+        this.requestUpdate();
+    };
+
+    connectedCallback() {
+        super.connectedCallback();
+        window.addEventListener("sipcore-update", this.updateHandler);
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        window.removeEventListener("sipcore-update", this.updateHandler);
+    }
+
+    render() {
+        // The call state lives in the global sipCore singleton, so an ongoing
+        // call is still reflected here after navigating away and back.
+        const callState = sipCore.callState;
+        const isIdle = callState === CALLSTATE.IDLE;
+        const isConnected = callState === CALLSTATE.CONNECTED;
+        // The phone is "ringing" while a call is being established (incoming or
+        // outgoing ringback), but not once it is connected.
+        const isRinging = callState === CALLSTATE.INCOMING || callState === CALLSTATE.OUTGOING;
+        const isMuted = sipCore.RTCSession?.isMuted().audio ?? false;
+
+        return html`
+            <ha-card class="${isRinging ? "ringing" : ""} fill-container">
+                ${isIdle
+                    ? html`
+                          <ha-icon-button
+                              class="call"
+                              label="Call ${this.config?.name || this.config?.extension}"
+                              @click="${() => sipCore.startCall(this.config?.extension || "")}"
+                          >
+                              <ha-icon .icon=${"mdi:phone"}></ha-icon>
+                          </ha-icon-button>
+                      `
+                    : !isConnected
+                    ? html`
+                          <ha-icon-button
+                              class="hangup"
+                              label="End call"
+                              @click="${() => sipCore.endCall()}"
+                          >
+                              <ha-icon .icon=${"mdi:phone-settings"}></ha-icon>
+                          </ha-icon-button>
+                      `
+                    : html`
+                          <ha-icon-button
+                              class="hangup"
+                              label="End call"
+                              @click="${() => sipCore.endCall()}"
+                          >
+                              <ha-icon .icon=${"mdi:phone-off"}></ha-icon>
+                          </ha-icon-button>
+                          <ha-icon-button
+                              class="mute"
+                              label="${isMuted ? "Unmute" : "Mute"}"
+                              ?disabled="${sipCore.RTCSession === null}"
+                              @click="${() => {
+                                  if (isMuted) sipCore.RTCSession?.unmute({ audio: true });
+                                  else sipCore.RTCSession?.mute({ audio: true });
+                                  this.requestUpdate();
+                              }}"
+                          >
+                              <ha-icon .icon=${isMuted ? "mdi:microphone-off" : "mdi:microphone"}></ha-icon>
+                          </ha-icon-button>
+                      `}
+            </ha-card>
+        `;
+    }
+}
+
+window.customCards = window.customCards || [];
+window.customCards.push({
+    type: "sip-call-button",
+    name: "SIP Call Button Card",
+    preview: true,
+    description: "A simple call/hangup button for a single extension",
+});
