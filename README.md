@@ -90,7 +90,9 @@ A minimal card with a single button for a fixed extension.
 ```yaml
 type: custom:sip-call-button
 extension: "100"
-name: Doorbell # optional, used for the button label
+name: Doorbell # optional
+rainbow_border: true;
+# override_icon: mdi:doorbell # optional
 ```
 
 <br>
