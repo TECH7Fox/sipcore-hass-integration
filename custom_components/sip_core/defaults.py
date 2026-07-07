@@ -62,7 +62,8 @@ sip_config = {
             },
             "8001": {
                 "name": "Doorbell",
-                "camera_entity": "camera.doorbell"
+                "camera_entity": "camera.doorbell",
+                "auto_answer": True
             }
         }
     }
