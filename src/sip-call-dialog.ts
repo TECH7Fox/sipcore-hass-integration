@@ -348,108 +348,105 @@ class SIPCallDialog extends LitElement {
         }
 
         return html`
-            <ha-dialog ?open=${this.configuratorOpen} @closed=${() => {
-            this.configuratorOpen = false;
-            if (!this.open) this.closePopup();
-        }} hideActions flexContent .heading=${true} data-domain="camera" ?large=${this.config.large}>
-                <ha-dialog-header slot="heading">
-                    <ha-icon-button-prev
-                        slot="navigationIcon"
-                        @click=${() => {
-                            this.configuratorOpen = false;
-                            this.openPopup();
-                        }}>
-                    </ha-icon-button-prev>
-                    <span slot="title" .title="Call">SIP Call Settings</span>
-                </ha-dialog-header>
-                <div tabindex="-1" dialogInitialFocus class="form">
-                    <ha-select
-                        naturalMenuWidth
-                        fixedMenuPosition
-                        icon
-                        label=${"Audio Output"}
-                        .value="${sipCore.AudioOutputId || "null"}"
-                        @selected=${this.handleAudioOutputChange}
-                        @closed="${(event: { stopPropagation: () => any }) => event.stopPropagation()}">
-                        <ha-list-item
-                            graphic="icon"
-                            .value="${"null"}"
-                            ?selected=${sipCore.AudioOutputId === null}>
-                            Default Output
-                            <ha-icon slot="graphic" .icon=${"mdi:headphones"}></ha-icon>
-                        </ha-list-item>
-                        ${this.outputDevices.map(
-                            (device) => html`
-                                <ha-list-item
-                                    graphic="icon"
-                                    .value="${device.deviceId}"
-                                    ?selected=${sipCore.AudioOutputId === device.deviceId}
-                                >
-                                    ${device.label}
-                                    <ha-icon slot="graphic" .icon=${"mdi:headphones"}></ha-icon>
-                                </ha-list-item>
-                            `,
-                        )}
-                        <ha-icon slot="icon" .icon=${"mdi:headphones"}></ha-icon>
-                    </ha-select>
-                    <ha-select
-                        naturalMenuWidth
-                        fixedMenuPosition
-                        icon
-                        label=${"Audio Input"}
-                        .value="${sipCore.AudioInputId || "null"}"
-                        @selected=${this.handleAudioInputChange}
-                        @closed="${(event: { stopPropagation: () => any }) => event.stopPropagation()}">
-                        <ha-list-item
-                            graphic="icon"
-                            .value="${"null"}"
-                            ?selected=${sipCore.AudioInputId === null}>
-                            Default Input
-                            <ha-icon slot="graphic" .icon=${"mdi:microphone"}></ha-icon>
-                        </ha-list-item>
-                        ${this.inputDevices.map(
-                            (device) => html`
-                                <ha-list-item
-                                    graphic="icon"
-                                    .value="${device.deviceId}"
-                                    ?selected=${sipCore.AudioInputId === device.deviceId}
-                                >
-                                    ${device.label}
-                                    <ha-icon slot="graphic" .icon=${"mdi:microphone"}></ha-icon>
-                                </ha-list-item>
-                            `,
-                        )}
-                        <ha-icon slot="icon" .icon=${"mdi:microphone"}></ha-icon>
-                    </ha-select>
-                    <ha-settings-row>
-                        <span slot="heading">Logged in as ${sipCore.user.ha_username} <span style="color: gray;">(${
-            sipCore.user.extension
-        })</span></span>
-                        <span slot="description">The current user used to log in to the SIP server. You can configure users in the SIP Core options</span> 
-                    </ha-settings-row>
-                    <ha-settings-row>
-                        <span slot="heading">Is ${
-                            sipCore.registered ? "registered" : "not registered"
-                        } <span style="color: gray;">(${sipCore.registered ? "true" : "false"})</span></span>
-                        <span slot="description">The current registration status of the SIP client. If not registered, check browser console and Asterisk logs for more information</span>
-                    </ha-settings-row>
-                    <ha-settings-row>
-                        <span slot="heading">Call state is ${sipCore.callState}</span>
-                        <span slot="description">The current call state of the SIP client</span>
-                    </ha-settings-row>
-                    <ha-settings-row>
-                        <span slot="heading">SIP-Core <span style="color: gray;">v${sipCore.version}</span></span>
-                        <span slot="description">The main SIP call system, created by Jordy Kuhne</span> 
-                    </ha-settings-row>
-                </div>
-            </ha-dialog>
+            ${this.configuratorOpen ? html`
+                <ha-dialog open @closed=${() => {
+                    this.configuratorOpen = false;
+                    if (!this.open) this.closePopup();
+                }} prevent-scrim-close data-domain="camera" ?large=${this.config.large}>
+                    <ha-dialog-header slot="header">
+                        <ha-icon-button
+                            slot="navigationIcon"
+                            label="Back"
+                            data-dialog="close">
+                            <ha-icon .icon=${"mdi:arrow-left"}></ha-icon>
+                        </ha-icon-button>
+                        <span slot="title" .title="Call">SIP Call Settings</span>
+                    </ha-dialog-header>
+                    <div tabindex="-1" dialogInitialFocus class="form">
+                        <ha-select
+                            naturalMenuWidth
+                            fixedMenuPosition
+                            icon
+                            label=${"Audio Output"}
+                            .value="${sipCore.AudioOutputId || "null"}"
+                            @selected=${this.handleAudioOutputChange}
+                            @closed="${(event: { stopPropagation: () => any }) => event.stopPropagation()}">
+                            <ha-list-item
+                                graphic="icon"
+                                .value="${"null"}"
+                                ?selected=${sipCore.AudioOutputId === null}>
+                                Default Output
+                                <ha-icon slot="graphic" .icon=${"mdi:headphones"}></ha-icon>
+                            </ha-list-item>
+                            ${this.outputDevices.map(
+                                (device) => html`
+                                    <ha-list-item
+                                        graphic="icon"
+                                        .value="${device.deviceId}"
+                                        ?selected=${sipCore.AudioOutputId === device.deviceId}
+                                    >
+                                        ${device.label}
+                                        <ha-icon slot="graphic" .icon=${"mdi:headphones"}></ha-icon>
+                                    </ha-list-item>
+                                `,
+                            )}
+                            <ha-icon slot="icon" .icon=${"mdi:headphones"}></ha-icon>
+                        </ha-select>
+                        <ha-select
+                            naturalMenuWidth
+                            fixedMenuPosition
+                            icon
+                            label=${"Audio Input"}
+                            .value="${sipCore.AudioInputId || "null"}"
+                            @selected=${this.handleAudioInputChange}
+                            @closed="${(event: { stopPropagation: () => any }) => event.stopPropagation()}">
+                            <ha-list-item
+                                graphic="icon"
+                                .value="${"null"}"
+                                ?selected=${sipCore.AudioInputId === null}>
+                                Default Input
+                                <ha-icon slot="graphic" .icon=${"mdi:microphone"}></ha-icon>
+                            </ha-list-item>
+                            ${this.inputDevices.map(
+                                (device) => html`
+                                    <ha-list-item
+                                        graphic="icon"
+                                        .value="${device.deviceId}"
+                                        ?selected=${sipCore.AudioInputId === device.deviceId}
+                                    >
+                                        ${device.label}
+                                        <ha-icon slot="graphic" .icon=${"mdi:microphone"}></ha-icon>
+                                    </ha-list-item>
+                                `,
+                            )}
+                            <ha-icon slot="icon" .icon=${"mdi:microphone"}></ha-icon>
+                        </ha-select>
+                        <ha-settings-row>
+                            <span slot="heading">Logged in as ${sipCore.user.ha_username} <span style="color: gray;">(${sipCore.user.extension})</span></span>
+                            <span slot="description">The current user used to log in to the SIP server. You can configure users in the SIP Core options</span>
+                        </ha-settings-row>
+                        <ha-settings-row>
+                            <span slot="heading">Is ${sipCore.registered ? "registered" : "not registered"} <span style="color: gray;">(${sipCore.registered ? "true" : "false"})</span></span>
+                            <span slot="description">The current registration status of the SIP client. If not registered, check browser console and Asterisk logs for more information</span>
+                        </ha-settings-row>
+                        <ha-settings-row>
+                            <span slot="heading">Call state is ${sipCore.callState}</span>
+                            <span slot="description">The current call state of the SIP client</span>
+                        </ha-settings-row>
+                        <ha-settings-row>
+                            <span slot="heading">SIP-Core <span style="color: gray;">v${sipCore.version}</span></span>
+                            <span slot="description">The main SIP call system, created by Jordy Kuhne</span>
+                        </ha-settings-row>
+                    </div>
+                </ha-dialog>
+            ` : ``}
 
             <ha-dialog ?open=${this.open} @closed=${
             this.closePopup
-        } hideActions flexContent .heading=${true} data-domain="camera" ?large=${this.config.large}>
-                <ha-dialog-header slot="heading">
+        } data-domain="camera" ?large=${this.config.large}>
+                <ha-dialog-header slot="header">
                     <ha-icon-button
-                        dialogAction="cancel"
+                        data-dialog="close"
                         slot="navigationIcon"
                         label="Close">
                         <ha-icon .icon=${"mdi:close"}></ha-icon>
@@ -463,6 +460,8 @@ class SIPCallDialog extends LitElement {
                         slot="actionItems"
                         label="Settings"
                         @click="${async () => {
+                            this.configuratorOpen = false;
+                            await this.updateComplete;
                             this.outputDevices = await sipCore.getAudioDevices(AUDIO_DEVICE_KIND.OUTPUT);
                             this.inputDevices = await sipCore.getAudioDevices(AUDIO_DEVICE_KIND.INPUT);
                             this.configuratorOpen = true;
@@ -470,11 +469,9 @@ class SIPCallDialog extends LitElement {
                         }}">
                         <ha-icon .icon=${"mdi:cog-outline"}></ha-icon>
                     </ha-icon-button>
-                    <ha-button-menu
-                        corner="BOTTOM_END"
-                        menucorner="END"
+                    <ha-dropdown
                         slot="actionItems"
-                        fixed
+                        placement="bottom-end"
                         @closed="${(event: { stopPropagation: () => any }) => event.stopPropagation()}"
                     >
                         <ha-icon-button
@@ -482,27 +479,21 @@ class SIPCallDialog extends LitElement {
                             label="More">
                             <ha-icon .icon=${"mdi:dots-vertical"}></ha-icon>
                         </ha-icon-button>
-                        <ha-list-item
-                            graphic="icon"
-                            hasmeta
+                        <ha-dropdown-item
                             @click="${() => {
                                 window.open("https://tech7fox.github.io/sip-hass-docs", "_blank");
                             }}">
+                            <ha-icon slot="icon" .icon=${"mdi:bookshelf"}></ha-icon>
                             Documentation
-                            <ha-icon slot="graphic" .icon=${"mdi:bookshelf"}></ha-icon>
-                            <ha-icon slot="meta" .icon=${"mdi:open-in-new"}></ha-icon>
-                        </ha-list-item>
-                        <ha-list-item
-                            graphic="icon"
-                            hasmeta
+                        </ha-dropdown-item>
+                        <ha-dropdown-item
                             @click="${() => {
                                 window.open("https://github.com/TECH7Fox/sipcore-hass-integration", "_blank");
                             }}">
+                            <ha-icon slot="icon" .icon=${"mdi:github"}></ha-icon>
                             Github
-                            <ha-icon slot="graphic" .icon=${"mdi:github"}></ha-icon>
-                            <ha-icon slot="meta" .icon=${"mdi:open-in-new"}></ha-icon>
-                        </ha-list-item>
-                    </ha-button-menu>
+                        </ha-dropdown-item>
+                    </ha-dropdown>
                 </ha-dialog-header>
                 <div tabindex="-1" dialogInitialFocus>
                     <div class="content">

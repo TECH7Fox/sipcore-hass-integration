@@ -149,7 +149,7 @@ class SIPContactsCard extends LitElement {
                                             sipCore.startCall(customNumber);
                                         }}"
                                         appearance="plain"
-                                        size="small"
+                                        size="s"
                                         variant="brand"
                                         >CALL</ha-button
                                     >
@@ -167,7 +167,7 @@ class SIPContactsCard extends LitElement {
                                     <ha-button
                                         @click="${() => sipCore.startCall(number)}"
                                         appearance="plain"
-                                        size="small"
+                                        size="s"
                                         variant="brand"
                                     >CALL</ha-button>
                                 </div>
