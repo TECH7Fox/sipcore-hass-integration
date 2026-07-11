@@ -123,7 +123,7 @@ class SIPCallButtonCard extends LitElement {
                 --mdc-icon-size: 24px;
             }
 
-            /* Blink/pulse the card background while the phone is ringing */
+            /* Blink/pulse the card background while making an outgoing call */
             ha-card.ringing {
                 animation: ringing-pulse 2s infinite;
             }
@@ -138,6 +138,33 @@ class SIPCallButtonCard extends LitElement {
                 100% {
                     box-shadow: inset 0 0 0 0 rgb(0, 160, 0);
                 }
+            }
+
+            /* Flash border and shake icon on an incoming call */
+            ha-card.incoming {
+                animation: incoming-flash 1s ease-in-out infinite;
+            }
+
+            ha-card.incoming .icon-area ha-icon {
+                animation: incoming-shake 1s ease-in-out infinite;
+            }
+
+            @keyframes incoming-flash {
+                0%   { box-shadow: inset 0 0 0 0 rgba(0, 160, 255, 0); border-color: transparent; }
+                40%  { box-shadow: inset 0 0 14px 6px rgba(0, 160, 255, 0.45); }
+                60%  { box-shadow: inset 0 0 14px 6px rgba(0, 160, 255, 0.45); }
+                100% { box-shadow: inset 0 0 0 0 rgba(0, 160, 255, 0); }
+            }
+
+            @keyframes incoming-shake {
+                0%   { transform: rotate(0deg); }
+                15%  { transform: rotate(-18deg); }
+                30%  { transform: rotate(18deg); }
+                45%  { transform: rotate(-12deg); }
+                60%  { transform: rotate(12deg); }
+                75%  { transform: rotate(-6deg); }
+                90%  { transform: rotate(6deg); }
+                100% { transform: rotate(0deg); }
             }
 
             /* Rainbow border while in a call */
@@ -188,25 +215,38 @@ class SIPCallButtonCard extends LitElement {
         window.removeEventListener("sipcore-update", this.updateHandler);
     }
 
+    handleClick() {
+        const callState = sipCore.callState;
+        if (callState === CALLSTATE.IDLE) {
+            sipCore.startCall(this.config?.extension || "");
+        } else if (callState === CALLSTATE.INCOMING) {
+            sipCore.answerCall();
+        } else {
+            sipCore.endCall();
+        }
+    }
+
     render() {
         // The call state lives in the global sipCore singleton, so an ongoing
         // call is still reflected here after navigating away and back.
         const callState = sipCore.callState;
         const isIdle = callState === CALLSTATE.IDLE;
+        const isIncoming = callState === CALLSTATE.INCOMING;
         const isConnected = callState === CALLSTATE.CONNECTED;
-        // The phone is "ringing" while a call is being established (incoming or
-        // outgoing ringback), but not once it is connected.
-        const isRinging = callState === CALLSTATE.INCOMING || callState === CALLSTATE.OUTGOING;
+        const isOutgoing = callState === CALLSTATE.OUTGOING;
         const isMuted = sipCore.RTCSession?.isMuted().audio ?? false;
 
-        const icon = isIdle ? this.config?.override_icon || "mdi:phone" : isConnected ? "mdi:phone-off" : "mdi:phone-settings";
-        const iconClass = isIdle ? "call" : "hangup";
-        const handleClick = isIdle
-            ? () => sipCore.startCall(this.config?.extension || "")
-            : () => sipCore.endCall();
+        const icon = isIdle
+            ? this.config?.override_icon || "mdi:phone"
+            : isIncoming
+            ? "mdi:phone-incoming"
+            : isConnected
+            ? "mdi:phone-off"
+            : "mdi:phone-settings";
+        const iconClass = isIdle || isIncoming ? "call" : "hangup";
 
         return html`
-            <ha-card class="${isRinging ? "ringing" : ""} ${isConnected && this.config?.rainbow_border ? "in-call" : ""} fill-container" @click="${handleClick}">
+            <ha-card class="${isIncoming ? "incoming" : ""} ${isOutgoing ? "ringing" : ""} ${isConnected && this.config?.rainbow_border ? "in-call" : ""} fill-container" @click="${this.handleClick}">
                 <ha-ripple></ha-ripple>
                 <div class="name">${this.config?.name || ""}</div>
                 <div class="icon-area">
