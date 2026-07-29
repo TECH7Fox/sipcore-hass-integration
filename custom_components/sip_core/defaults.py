@@ -12,6 +12,10 @@ sip_config = {
     },
     "outgoingRingtoneUrl": "/sip_core_files/ringback-tone.mp3",
     "incomingRingtoneUrl": "/sip_core_files/ring-tone.mp3",
+    # "auto" (default), "metadata" or "none". Use "none" to skip downloading
+    # the ringtones on every page load, at the cost of a short delay before
+    # the first ring.
+    "ringtone_preload": "auto",
     "backup_user": {
         "ha_username": "myuser",
         "extension": "100",

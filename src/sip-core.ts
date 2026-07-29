@@ -48,6 +48,21 @@ export interface SIPCoreConfig {
     incomingRingtoneUrl: string;
     /** URL for outgoing call ringtone */
     outgoingRingtoneUrl: string;
+    /**
+     * How eagerly the browser should fetch the ringtones, mapped onto the
+     * `preload` attribute of the underlying audio elements.
+     *
+     * SIP Core loads on every Home Assistant page, so with the default
+     * `"auto"` both ringtones are downloaded on every page load whether or
+     * not a call happens. Set to `"none"` to defer the download until a
+     * ringtone actually plays — at the cost of a short delay before the
+     * first ring, since the file is then fetched on demand.
+     *
+     * Omit for the previous behaviour.
+     *
+     * @defaultValue "auto"
+     */
+    ringtone_preload?: "auto" | "metadata" | "none";
     /** Output configuration */
     out: String;
     auto_answer: boolean;
@@ -251,8 +266,23 @@ export class SIPCore {
     }
 
     private async setupAudio() {
-        this.incomingAudio = new Audio(this.config.incomingRingtoneUrl);
-        this.outgoingAudio = new Audio(this.config.outgoingRingtoneUrl);
+        const ALLOWED_PRELOAD = ["auto", "metadata", "none"];
+        let preload = this.config.ringtone_preload ?? "auto";
+        if (!ALLOWED_PRELOAD.includes(preload)) {
+            console.warn(`Invalid ringtone_preload "${preload}", falling back to "auto". Expected one of: ${ALLOWED_PRELOAD.join(", ")}.`);
+            preload = "auto";
+        }
+
+        // preload must be set before src: assigning src queues the resource
+        // selection algorithm, and a later preload change would not be applied.
+        this.incomingAudio = new Audio();
+        this.incomingAudio.preload = preload;
+        this.incomingAudio.src = this.config.incomingRingtoneUrl;
+
+        this.outgoingAudio = new Audio();
+        this.outgoingAudio.preload = preload;
+        this.outgoingAudio.src = this.config.outgoingRingtoneUrl;
+
         this.incomingAudio.loop = true;
         this.outgoingAudio.loop = true;
 
