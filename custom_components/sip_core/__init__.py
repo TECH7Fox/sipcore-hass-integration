@@ -8,11 +8,16 @@ from homeassistant.components.hassio.const import DOMAIN as HASSIO_DOMAIN
 from homeassistant.components.hassio.handler import HassIO, get_supervisor_client
 from homeassistant.helpers.http import HomeAssistantView
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.redact import async_redact_data
 from .const import ASTERISK_ADDON_SLUG, DOMAIN, JS_FILENAME, JS_URL_PATH
 from .resources import add_resources, remove_resources
 from .defaults import sip_config
 
 logger = logging.getLogger(__name__)
+
+# `sip_config.users[].password` is the SIP account password, sent to the browser
+# so it can register against the PBX. It has no business being written to the log.
+TO_REDACT = {"password"}
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
@@ -28,9 +33,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         "options": {"sip_config": config_entry.options.get("sip_config", sip_config)},
         "entry_id": config_entry.entry_id,
     })
-    logger.info(config_entry.data)
-    logger.info(config_entry.options)
-    logger.info(config_entry.entry_id)
+    logger.debug(
+        "Config entry %s: data=%s, options=%s",
+        config_entry.entry_id,
+        async_redact_data(config_entry.data, TO_REDACT),
+        async_redact_data(config_entry.options, TO_REDACT),
+    )
 
     await hass.http.async_register_static_paths(
         [
