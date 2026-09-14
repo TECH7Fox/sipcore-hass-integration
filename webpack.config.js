@@ -1,9 +1,11 @@
 const path = require('path');
 
-module.exports = {
+module.exports = (env, argv) => ({
   entry: './src/index.ts',
-  devtool: 'inline-source-map',
-  mode: 'development',
+  // Inline source maps are ~1.6 MB and would be embedded in the bundle that
+  // every Home Assistant page loads, so keep them out of production builds.
+  devtool: argv.mode === 'production' ? false : 'inline-source-map',
+  mode: argv.mode || 'development',
   module: {
     rules: [
       {
@@ -20,4 +22,4 @@ module.exports = {
     filename: 'sip_core.js',
     path: path.resolve(__dirname, 'custom_components', 'sip_core', 'www'),
   },
-};
+});
