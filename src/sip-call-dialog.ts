@@ -256,6 +256,16 @@ class SIPCallDialog extends LitElement {
         if (this.config.auto_open !== false) {
             window.addEventListener("sipcore-call-started", this.openPopup);
             window.addEventListener("sipcore-call-ended", this.closePopup);
+            // `sipcore-call-started` is dispatched as soon as the session is
+            // created, which can be before this element has been upgraded: the
+            // `?call=` autocall dials straight from `init()`, while the custom
+            // element is still only a placeholder appended by `setupPopup()`.
+            // The event is then missed and the popup never opens, leaving an
+            // active call with no way to hang up. Catch up on a call that is
+            // already in progress rather than relying on the event ordering.
+            if (sipCore.callState !== CALLSTATE.IDLE) {
+                this.openPopup();
+            }
         } else {
             window.addEventListener("sipcore-call-started", this.updateHandler);
             window.addEventListener("sipcore-call-ended", this.updateHandler);
