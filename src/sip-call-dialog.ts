@@ -607,7 +607,7 @@ class SIPCallDialog extends LitElement {
                         <ha-icon-button
                             slot="navigationIcon"
                             label="Back"
-                            data-dialog="close">
+                            @click="${(e: Event) => { e.stopPropagation(); this.configuratorOpen = false; }}">
                             <ha-icon .icon=${"mdi:arrow-left"}></ha-icon>
                         </ha-icon-button>
                         <span slot="title" .title="Call">SIP Call Settings</span>
@@ -634,19 +634,19 @@ class SIPCallDialog extends LitElement {
                             @closed="${(event: { stopPropagation: () => any }) => event.stopPropagation()}">
                         </ha-select>
                         <ha-settings-row>
-                            <span slot="heading">Logged in as ${sipCore.user.ha_username} <span style="color: gray;">(${sipCore.user.extension})</span></span>
+                            <span slot="headline">Logged in as ${sipCore.user.ha_username} <span style="color: gray;">(${sipCore.user.extension})</span></span>
                             <span slot="description">The current user used to log in to the SIP server. You can configure users in the SIP Core options</span>
                         </ha-settings-row>
                         <ha-settings-row>
-                            <span slot="heading">Is ${sipCore.registered ? "registered" : "not registered"} <span style="color: gray;">(${sipCore.registered ? "true" : "false"})</span></span>
+                            <span slot="headline">Is ${sipCore.registered ? "registered" : "not registered"} <span style="color: gray;">(${sipCore.registered ? "true" : "false"})</span></span>
                             <span slot="description">The current registration status of the SIP client. If not registered, check browser console and Asterisk logs for more information</span>
                         </ha-settings-row>
                         <ha-settings-row>
-                            <span slot="heading">Call state is ${sipCore.callState}</span>
+                            <span slot="headline">Call state is ${sipCore.callState}</span>
                             <span slot="description">The current call state of the SIP client</span>
                         </ha-settings-row>
                         <ha-settings-row>
-                            <span slot="heading">SIP-Core <span style="color: gray;">v${sipCore.version}</span></span>
+                            <span slot="headline">SIP-Core <span style="color: gray;">v${sipCore.version}</span></span>
                             <span slot="description">The main SIP call system, created by Jordy Kuhne</span>
                         </ha-settings-row>
                     </div>
@@ -658,9 +658,9 @@ class SIPCallDialog extends LitElement {
         } data-domain="camera" ?large=${this.config.large}>
                 <ha-dialog-header slot="header">
                     <ha-icon-button
-                        data-dialog="close"
                         slot="navigationIcon"
-                        label="Close">
+                        label="Close"
+                        @click="${(e: Event) => { e.stopPropagation(); this.closePopup(); }}">
                         <ha-icon .icon=${"mdi:close"}></ha-icon>
                     </ha-icon-button>
                     <div slot="title" class="row">
