@@ -373,18 +373,8 @@ class SIPCallDialog extends LitElement {
         this.go2rtcIngressFailed = false;
 
         try {
-            const sessionResult = await this.hass.callWS({
-                type: "supervisor/api",
-                endpoint: "/ingress/session",
-                method: "post",
-            });
-
-            const session = sessionResult?.session;
+            const session = await sipCore.ensureHassioSession();
             if (!session) throw new Error("Supervisor did not return an ingress session");
-
-            document.cookie =
-                `ingress_session=${session}; path=/; SameSite=Lax` +
-                (window.location.protocol === "https:" ? "; Secure" : "");
 
             let ingressUrl = extension?.go2rtc_stream_url || extension?.go2rtc_url || "";
 
