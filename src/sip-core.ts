@@ -98,6 +98,8 @@ export class SIPCore {
     private wssUrl!: string;
     private iceCandidateTimeout: ReturnType<typeof setTimeout> | null = null;
     private visibilityRecoveryTimeout: ReturnType<typeof setTimeout> | null = null;
+    private ingressSession: string | null = null;
+    private ingressKeepAliveHandle: ReturnType<typeof setInterval> | null = null;
 
     public remoteAudioStream: MediaStream | null = null;
     public remoteVideoStream: MediaStream | null = null;
@@ -288,12 +290,16 @@ export class SIPCore {
             if (this.visibilityRecoveryTimeout != null) {
                 clearTimeout(this.visibilityRecoveryTimeout);
             }
-            this.visibilityRecoveryTimeout = setTimeout(() => {
+            this.visibilityRecoveryTimeout = setTimeout(async () => {
                 this.visibilityRecoveryTimeout = null;
                 if (document.visibilityState !== "visible") return;
                 if (this.registered) return;
                 if (this.callState !== CALLSTATE.IDLE) return; // never interrupt an active call
                 console.warn("SIP Core: still unregistered after becoming visible again, reconnecting...");
+                // Refresh the ingress session first because it expires while the tab is suspended
+                await this.ensureHassioSession().catch((error) => {
+                    console.error("SIP Core: failed to refresh ingress session:", error);
+                });
                 this.ua.stop();
                 this.ua = this.setupUA();
                 this.ua.start();
@@ -331,7 +337,9 @@ export class SIPCore {
             }
         });
         this.wssUrl = await this.fetchWSSUrl();
-        await this.createHassioSession();
+        if (await this.createHassioSession()) {
+            this.startIngressKeepAlive();
+        }
         await this.setupAudio();
         await this.setupUser();
 
@@ -631,25 +639,46 @@ export class SIPCore {
         document.cookie = `ingress_session=${session};path=/api/hassio_ingress/;SameSite=Strict${
             location.protocol === "https:" ? ";Secure" : ""
         }`;
+        this.ingressSession = session;
         return session;
     }
 
-    private async createHassioSession(): Promise<void> {
+    /**
+     * Creates a new Supervisor ingress session and stores it in the ingress cookie.
+     * Returns null when no Supervisor is available.
+     */
+    async createHassioSession(): Promise<string | null> {
         try {
             const resp: { session: string } = await this.hass.callWS({
                 type: "supervisor/api",
                 endpoint: "/ingress/session",
                 method: "post",
             });
-            this.setIngressCookie(resp.session);
+            return this.setIngressCookie(resp.session);
         } catch (error) {
             if ((error as any)?.code === "unknown_command") {
                 console.info("Home Assistant Supervisor API not available. Assuming not running on Home Assistant OS.");
-            } else {
-                console.error("Error creating Hass.io session:", error);
-                throw error;
+                return null;
+            }
+            console.error("Error creating Hass.io session:", error);
+            throw error;
+        }
+    }
+
+    /**
+     * Extends the current Supervisor ingress session, creating a new one when it expired.
+     * Returns null when no Supervisor is available.
+     */
+    async ensureHassioSession(): Promise<string | null> {
+        if (this.ingressSession !== null) {
+            try {
+                await this.validateHassioSession(this.ingressSession);
+                return this.ingressSession;
+            } catch (error) {
+                console.warn("SIP Core: ingress session is no longer valid, creating a new one", error);
             }
         }
+        return this.createHassioSession();
     }
 
     private async validateHassioSession(session: string) {
@@ -660,6 +689,18 @@ export class SIPCore {
             data: { session },
         });
         this.setIngressCookie(session);
+    }
+
+    // The Supervisor drops a session after 15 minutes without validation
+    private startIngressKeepAlive() {
+        if (this.ingressKeepAliveHandle != null) {
+            clearInterval(this.ingressKeepAliveHandle);
+        }
+        this.ingressKeepAliveHandle = setInterval(() => {
+            this.ensureHassioSession().catch((error) => {
+                console.error("SIP Core: failed to keep ingress session alive:", error);
+            });
+        }, 60000);
     }
 
     /** Returns a list of audio devices of the specified kind */
