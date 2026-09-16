@@ -138,14 +138,13 @@ export class SIPCore {
             return this.config.custom_wss_url;
         }
 
-        // async fetch ingress entry
-        const token = this.hass.auth.data.access_token;
+        // async fetch ingress entry.
+        // fetchWithAuth, not a hand-built Bearer header: see fetchConfig below.
+        // A 401 here is worse than there -- it throws, so init() never reaches
+        // registration and an incoming call does not ring at all.
         try {
-            const resp = await fetch("/api/sip-core/asterisk-ingress", {
+            const resp = await this.hass.fetchWithAuth("/api/sip-core/asterisk-ingress", {
                 method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
             });
             if (resp.ok) {
                 const data = await resp.json();
@@ -374,12 +373,14 @@ export class SIPCore {
     }
 
     private async fetchConfig(hass: any): Promise<SIPCoreConfig> {
-        const token = hass.auth.data.access_token;
-        const resp = await fetch("/api/sip-core/config?t=" + Date.now(), {
+        // Use fetchWithAuth rather than reading hass.auth.data.access_token
+        // directly: an access token expires after 30 minutes, and the stored
+        // one is only refreshed on demand. Sending it as-is fails with 401
+        // whenever it has gone stale -- typically in the companion app, whose
+        // WebView is suspended in the background and resumed long after the
+        // token expired. fetchWithAuth refreshes first when auth.expired.
+        const resp = await hass.fetchWithAuth("/api/sip-core/config?t=" + Date.now(), {
             method: "GET",
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
         });
         if (resp.ok) {
             const config: SIPCoreConfig = await resp.json();
