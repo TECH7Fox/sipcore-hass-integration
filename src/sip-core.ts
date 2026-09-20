@@ -86,7 +86,6 @@ export class SIPCore {
     public RTCSession: RTCSession | null = null;
 
     public version: string = version;
-    public hass: any;
     public user!: User;
     public config!: SIPCoreConfig;
 
@@ -105,13 +104,40 @@ export class SIPCore {
     public incomingAudio: HTMLAudioElement | null = null;
     public outgoingAudio: HTMLAudioElement | null = null;
 
+    private _hass: any;
+
+    /**
+     * The live `hass` object.
+     *
+     * `home-assistant` receives a brand new `hass` object on every state
+     * update, but this singleton lives outside the element tree - it is
+     * instantiated by a frontend module, so Home Assistant never hands it a
+     * fresh one. The snapshot taken in the constructor therefore ages: its
+     * `states` keep the `camera_proxy` token that was current at page load
+     * (it rotates every 5 minutes, so the call popup ends up embedding a
+     * token that no longer validates and the camera image 403s), and its
+     * `auth.data` is only refreshed when something asks for it.
+     *
+     * Look the live object up on each access instead of caching it. The
+     * setter is kept so that the property stays assignable for anything that
+     * already writes to it.
+     */
+    get hass(): any {
+        const homeAssistant = document.querySelector("home-assistant") as any;
+        return homeAssistant?.hass ?? this._hass;
+    }
+
+    set hass(hass: any) {
+        this._hass = hass;
+    }
+
     constructor() {
         // Get hass instance
         const homeAssistant = document.querySelector("home-assistant");
         if (!homeAssistant) {
             throw new Error("Home Assistant element not found");
         }
-        this.hass = (homeAssistant as any).hass;
+        this._hass = (homeAssistant as any).hass;
 
         // Bind event handlers
         this.handleRemoteTrackEvent = this.handleRemoteTrackEvent.bind(this);
