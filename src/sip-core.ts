@@ -165,13 +165,9 @@ export class SIPCore {
         }
 
         // async fetch ingress entry
-        const token = this.hass.auth.data.access_token;
         try {
-            const resp = await fetch("/api/sip-core/asterisk-ingress", {
+            const resp = await this.hass.fetchWithAuth("/api/sip-core/asterisk-ingress", {
                 method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
             });
             if (resp.ok) {
                 const data = await resp.json();
@@ -400,12 +396,8 @@ export class SIPCore {
     }
 
     private async fetchConfig(hass: any): Promise<SIPCoreConfig> {
-        const token = hass.auth.data.access_token;
-        const resp = await fetch("/api/sip-core/config?t=" + Date.now(), {
+        const resp = await hass.fetchWithAuth("/api/sip-core/config?t=" + Date.now(), {
             method: "GET",
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
         });
         if (resp.ok) {
             const config: SIPCoreConfig = await resp.json();
