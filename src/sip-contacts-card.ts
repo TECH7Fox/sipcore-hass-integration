@@ -86,6 +86,23 @@ class SIPContactsCard extends LitElement {
                 margin-right: 8px;
             }
 
+            input.editField {
+                box-sizing: border-box;
+                height: 40px;
+                padding: 0 8px;
+                border: none;
+                border-bottom: 1px solid var(--divider-color, rgba(127, 127, 127, 0.4));
+                background: transparent;
+                color: var(--primary-text-color);
+                font-family: inherit;
+                font-size: 16px;
+                outline: none;
+            }
+
+            input.editField:focus {
+                border-bottom: 2px solid var(--primary-color);
+            }
+
             state-badge {
                 flex-shrink: 0;
             }
@@ -125,12 +142,13 @@ class SIPContactsCard extends LitElement {
                                         .overrideIcon=${icon}
                                         .stateColor=${this.config?.state_color}
                                     ></state-badge>
-                                    <ha-textfield
+                                    <input
                                         id="custom_${extension.name}"
-                                        .value=${number}
-                                        .label=${extension.name}
+                                        class="editField"
                                         type="text"
-                                        .inputmode="text"
+                                        inputmode="text"
+                                        placeholder="${extension.name}"
+                                        .value=${number}
                                         @keyup="${(e: KeyboardEvent) => {
                                             if (e.key === "Enter") {
                                                 var el = this.shadowRoot?.getElementById(
@@ -140,8 +158,7 @@ class SIPContactsCard extends LitElement {
                                                 sipCore.startCall(customNumber);
                                             }
                                         }}"
-                                        class="editField"
-                                    ></ha-textfield>
+                                    />
                                     <ha-button
                                         @click="${() => {
                                             var el = this.shadowRoot?.getElementById(`custom_${extension.name}`) as any;
