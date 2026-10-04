@@ -1,5 +1,6 @@
 import { LitElement, html, css } from "lit";
 import { sipCore } from "./sip-core";
+import { localize } from "./localize";
 
 declare global {
     interface Window {
@@ -109,7 +110,7 @@ class SIPContactsCard extends LitElement {
         }
 
         return html`
-            <ha-card header="${this.config?.title || "Contacts"}">
+            <ha-card header="${this.config?.title || localize(this.hass, "contacts")}">
                 <div class="wrapper">
                     ${Object.entries(this.config?.extensions || {}).map(([number, extension]) => {
                         const isMe = number === sipCore.user.extension;
@@ -151,7 +152,7 @@ class SIPContactsCard extends LitElement {
                                         appearance="plain"
                                         size="s"
                                         variant="brand"
-                                        >CALL</ha-button
+                                        >${localize(this.hass, "call_button")}</ha-button
                                     >
                                 </div>
                             `;
@@ -169,7 +170,7 @@ class SIPContactsCard extends LitElement {
                                         appearance="plain"
                                         size="s"
                                         variant="brand"
-                                    >CALL</ha-button>
+                                    >${localize(this.hass, "call_button")}</ha-button>
                                 </div>
                             `;
                         }

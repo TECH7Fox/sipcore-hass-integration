@@ -1,0 +1,14 @@
+{
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "sip_config": "SIP Core-Konfiguration"
+        },
+        "data_description": {
+          "sip_config": "Vollständiges SIP Core-Konfigurationsobjekt, einschließlich ICE-Einstellungen, Klingelton-URLs, Benutzeranmeldedaten und Popup-Optionen. Weitere Details finden Sie in der Dokumentation."
+        }
+      }
+    }
+  }
+}

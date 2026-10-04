@@ -1,6 +1,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { sipCore, CALLSTATE } from "./sip-core";
+import { localize } from "./localize";
 
 declare global {
     interface Window {
@@ -257,7 +258,7 @@ class SIPCallButtonCard extends LitElement {
                         ? html`
                               <ha-icon-button
                                   class="mute"
-                                  label="${isMuted ? "Unmute" : "Mute"}"
+                                  label="${isMuted ? localize(this.hass, "unmute") : localize(this.hass, "mute")}"
                                   ?disabled="${sipCore.RTCSession === null}"
                                   @click="${(e: Event) => {
                                       e.stopPropagation();

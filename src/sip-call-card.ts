@@ -2,6 +2,7 @@ import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { sipCore, CALLSTATE } from "./sip-core";
 import { AudioVisualizer } from "./audio-visualizer";
+import { localize } from "./localize";
 
 declare global {
     interface Window {
@@ -200,27 +201,27 @@ class SIPCallCard extends LitElement {
 
         switch (sipCore.callState) {
             case CALLSTATE.IDLE:
-                statusText = "No active call";
+                statusText = localize(this.hass, "no_active_call");
                 phoneIcon = "mdi:phone";
                 break;
             case CALLSTATE.INCOMING:
-                statusText = "Incoming call from " + remoteName;
+                statusText = localize(this.hass, "incoming_call_from", { name: remoteName });
                 phoneIcon = "mdi:phone-incoming";
                 break;
             case CALLSTATE.OUTGOING:
-                statusText = "Outgoing call to " + remoteName;
+                statusText = localize(this.hass, "outgoing_call_to", { name: remoteName });
                 phoneIcon = "mdi:phone-outgoing";
                 break;
             case CALLSTATE.CONNECTED:
-                statusText = "Connected to " + remoteName;
+                statusText = localize(this.hass, "connected_to", { name: remoteName });
                 phoneIcon = "mdi:phone-in-talk";
                 break;
             case CALLSTATE.CONNECTING:
-                statusText = "Connecting to " + remoteName;
+                statusText = localize(this.hass, "connecting_to", { name: remoteName });
                 phoneIcon = "mdi:phone";
                 break;
             default:
-                statusText = "Unknown call state";
+                statusText = localize(this.hass, "unknown_call_state");
                 phoneIcon = "mdi:phone";
                 break;
         }
@@ -266,7 +267,7 @@ class SIPCallCard extends LitElement {
                               `
                             : html`
                                   <div class="placeholder">
-                                      <span>${this.config?.idle_text ?? "No active call"}</span>
+                                      <span>${this.config?.idle_text ?? localize(this.hass, "no_active_call")}</span>
                                   </div>
                               `
                         : camera
@@ -285,7 +286,7 @@ class SIPCallCard extends LitElement {
                     <div>
                         <ha-icon-button
                             style="color: var(--label-badge-green);"
-                            label="Answer call"
+                            label="${localize(this.hass, "answer_call")}"
                             ?disabled="${sipCore.callState === CALLSTATE.IDLE}"
                             @click="${() => sipCore.answerCall()}">
                             <ha-icon .icon=${phoneIcon}></ha-icon>
@@ -325,7 +326,7 @@ class SIPCallCard extends LitElement {
                     <div>
                         <ha-icon-button
                             class="audio-button"
-                            label="Mute audio"
+                            label="${localize(this.hass, "mute_audio")}"
                             ?disabled="${sipCore.RTCSession === null}"
                             @click="${() => {
                                 if (sipCore.RTCSession?.isMuted().audio) sipCore.RTCSession?.unmute({ audio: true });
@@ -342,7 +343,7 @@ class SIPCallCard extends LitElement {
                         </ha-icon-button>
                         <ha-icon-button
                             class="audio-button"
-                            label="Mute video"
+                            label="${localize(this.hass, "mute_video")}"
                             style="display: ${sipCore.config.sip_video ? "block" : "none"}"
                             ?disabled="${sipCore.RTCSession === null}"
                             @click="${() => {
@@ -363,7 +364,7 @@ class SIPCallCard extends LitElement {
                         <span style="color: gray">${sipCore.callDuration}</span>
                         <ha-icon-button
                             style="color: var(--label-badge-red);"
-                            label="End Call"
+                            label="${localize(this.hass, "end_call")}"
                             ?disabled="${sipCore.callState === CALLSTATE.IDLE}"
                             @click="${() => sipCore.endCall()}">
                             <ha-icon .icon=${"mdi:phone-off"}></ha-icon>
