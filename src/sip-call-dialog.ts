@@ -14,6 +14,10 @@ interface Extension {
     go2rtc_ingress?: boolean | null;
     go2rtc_addon_slug?: string | null;
     live_provider?: string | null;
+    /** Hide go2rtc's player controls and status label (e.g. "RTC"). Default: false. Needs a same-origin player (go2rtc_ingress). */
+    go2rtc_hide_controls?: boolean | null;
+    /** Mute the go2rtc player, as call audio already comes via SIP. Default: false. Needs a same-origin player (go2rtc_ingress). */
+    go2rtc_muted?: boolean | null;
 }
 
 enum ButtonType {
@@ -37,6 +41,10 @@ interface PopupConfig {
 }
 
 const DEFAULT_AUDIO_DEVICE_ID = "__default__";
+
+// Id of the <style> tag injected into the go2rtc player frame to hide its
+// overlay (status/mode label, e.g. "RTC") and native video controls.
+const GO2RTC_DECLUTTER_STYLE_ID = "sipcore-go2rtc-declutter-style";
 
 @customElement("sip-call-dialog")
 class SIPCallDialog extends LitElement {
@@ -453,6 +461,45 @@ class SIPCallDialog extends LitElement {
         }
     }
 
+    /**
+     * Applies the per-extension `go2rtc_hide_controls` / `go2rtc_muted` overrides to
+     * the embedded go2rtc player: hides its "RTC"/"MSE"/... status overlay and native
+     * <video> controls when `go2rtc_hide_controls` is set to `true`, and mutes the
+     * video element when `go2rtc_muted` is set to `true`. Both are opt-in (the
+     * player is left as-is by default) and only work for same-origin frames
+     * (go2rtc_ingress); cross-origin frames are left untouched since the browser
+     * blocks DOM access to them.
+     */
+    private declutterGo2RTCFrame(event: Event, extension?: Extension) {
+        const hideControls = extension?.go2rtc_hide_controls === true;
+        const mute = extension?.go2rtc_muted === true;
+        if (!hideControls && !mute) return;
+
+        const iframe = event.target as HTMLIFrameElement;
+        let doc: Document | null;
+        try {
+            doc = iframe.contentDocument;
+        } catch (err) {
+            // Cross-origin frame (no go2rtc_ingress): browser blocks DOM access, nothing we can do.
+            return;
+        }
+        if (!doc) return;
+
+        if (hideControls && !doc.getElementById(GO2RTC_DECLUTTER_STYLE_ID)) {
+            const style = doc.createElement("style");
+            style.id = GO2RTC_DECLUTTER_STYLE_ID;
+            style.textContent = "video-stream .info { display: none !important; }";
+            doc.head?.appendChild(style);
+        }
+
+        doc.querySelectorAll("video").forEach((video) => {
+            const videoElement = video as HTMLVideoElement;
+            if (hideControls) videoElement.controls = false;
+            if (mute) videoElement.muted = true;
+        });
+    }
+
+    
     renderCameraStream(camera: string) {
         this.hass = sipCore.hass || this.hass;
 
@@ -484,6 +531,7 @@ class SIPCallDialog extends LitElement {
                         class="sip-camera-frame"
                         src=${this.go2rtcIngressFrameUrl}
                         allow="autoplay; fullscreen; microphone; camera"
+                        @load=${(e: Event) => this.declutterGo2RTCFrame(e, extension)}
                     ></iframe>
                 `;
             }
@@ -505,6 +553,7 @@ class SIPCallDialog extends LitElement {
                     class="sip-camera-frame"
                     src=${go2rtcFrameUrl}
                     allow="autoplay; fullscreen; microphone; camera"
+                    @load=${(e: Event) => this.declutterGo2RTCFrame(e, extension)}
                 ></iframe>
             `;
         }
