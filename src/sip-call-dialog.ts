@@ -34,6 +34,7 @@ interface PopupConfig {
     large: boolean | undefined;
     auto_open: boolean;
     hide_header_button?: boolean;
+    hide_dialog_header_buttons?: boolean;
 }
 
 const DEFAULT_AUDIO_DEVICE_ID = "__default__";
@@ -647,55 +648,59 @@ class SIPCallDialog extends LitElement {
             this.closePopup
         } data-domain="camera" ?large=${this.config.large}>
                 <ha-dialog-header slot="header">
-                    <ha-icon-button
-                        data-dialog="close"
-                        slot="navigationIcon"
-                        label="Close">
-                        <ha-icon .icon=${"mdi:close"}></ha-icon>
-                    </ha-icon-button>
+                    ${this.config.hide_dialog_header_buttons ? "" : html`
+                        <ha-icon-button
+                            data-dialog="close"
+                            slot="navigationIcon"
+                            label="Close">
+                            <ha-icon .icon=${"mdi:close"}></ha-icon>
+                        </ha-icon-button>
+                    `}
                     <div slot="title" class="row">
                         <span>${statusText}</span>
                         <span style="color: gray;">${sipCore.callDuration}</span>
                     </div>
-                    <ha-icon-button
-                        dialogAction="settings"
-                        slot="actionItems"
-                        label="Settings"
-                        @click="${async () => {
-                            this.configuratorOpen = false;
-                            await this.updateComplete;
-                            this.outputDevices = await sipCore.getAudioDevices(AUDIO_DEVICE_KIND.OUTPUT);
-                            this.inputDevices = await sipCore.getAudioDevices(AUDIO_DEVICE_KIND.INPUT);
-                            this.configuratorOpen = true;
-                            this.requestUpdate();
-                        }}">
-                        <ha-icon .icon=${"mdi:cog-outline"}></ha-icon>
-                    </ha-icon-button>
-                    <ha-dropdown
-                        slot="actionItems"
-                        placement="bottom-end"
-                        @closed="${(event: { stopPropagation: () => any }) => event.stopPropagation()}"
-                    >
+                    ${this.config.hide_dialog_header_buttons ? "" : html`
                         <ha-icon-button
-                            slot="trigger"
-                            label="More">
-                            <ha-icon .icon=${"mdi:dots-vertical"}></ha-icon>
+                            dialogAction="settings"
+                            slot="actionItems"
+                            label="Settings"
+                            @click="${async () => {
+                                this.configuratorOpen = false;
+                                await this.updateComplete;
+                                this.outputDevices = await sipCore.getAudioDevices(AUDIO_DEVICE_KIND.OUTPUT);
+                                this.inputDevices = await sipCore.getAudioDevices(AUDIO_DEVICE_KIND.INPUT);
+                                this.configuratorOpen = true;
+                                this.requestUpdate();
+                            }}">
+                            <ha-icon .icon=${"mdi:cog-outline"}></ha-icon>
                         </ha-icon-button>
-                        <ha-dropdown-item
-                            @click="${() => {
-                                window.open("https://tech7fox.github.io/sip-hass-docs", "_blank");
-                            }}">
-                            <ha-icon slot="icon" .icon=${"mdi:bookshelf"}></ha-icon>
-                            Documentation
-                        </ha-dropdown-item>
-                        <ha-dropdown-item
-                            @click="${() => {
-                                window.open("https://github.com/TECH7Fox/sipcore-hass-integration", "_blank");
-                            }}">
-                            <ha-icon slot="icon" .icon=${"mdi:github"}></ha-icon>
-                            Github
-                        </ha-dropdown-item>
-                    </ha-dropdown>
+                        <ha-dropdown
+                            slot="actionItems"
+                            placement="bottom-end"
+                            @closed="${(event: { stopPropagation: () => any }) => event.stopPropagation()}"
+                        >
+                            <ha-icon-button
+                                slot="trigger"
+                                label="More">
+                                <ha-icon .icon=${"mdi:dots-vertical"}></ha-icon>
+                            </ha-icon-button>
+                            <ha-dropdown-item
+                                @click="${() => {
+                                    window.open("https://tech7fox.github.io/sip-hass-docs", "_blank");
+                                }}">
+                                <ha-icon slot="icon" .icon=${"mdi:bookshelf"}></ha-icon>
+                                Documentation
+                            </ha-dropdown-item>
+                            <ha-dropdown-item
+                                @click="${() => {
+                                    window.open("https://github.com/TECH7Fox/sipcore-hass-integration", "_blank");
+                                }}">
+                                <ha-icon slot="icon" .icon=${"mdi:github"}></ha-icon>
+                                Github
+                            </ha-dropdown-item>
+                        </ha-dropdown>
+                    `}
                 </ha-dialog-header>
                 <div tabindex="-1" dialogInitialFocus>
                     <div class="content">
